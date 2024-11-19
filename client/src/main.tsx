@@ -1,7 +1,8 @@
 import ReactDOM from 'react-dom/client'
 import { createBrowserRouter, RouterProvider } from 'react-router-dom'
 import 'bootstrap/dist/css/bootstrap.min.css'
-import { ApolloClient, InMemoryCache, ApolloProvider } from '@apollo/client'
+import { ApolloClient, InMemoryCache, ApolloProvider, HttpLink, from } from '@apollo/client';
+import { onError } from '@apollo/client/link/error';
 
 import App from './App.js'
 import SearchBooks from './pages/SearchBooks.js'
@@ -9,10 +10,24 @@ import SavedBooks from './pages/SavedBooks.js'
 import { StoreProvider } from './store/index.js'
 
 // Create an Apollo Client
+const errorLink = onError(({ graphQLErrors, networkError }) => {
+  if (graphQLErrors) {
+    graphQLErrors.forEach(({ message, locations, path }) =>
+      console.log(
+        `[GraphQL error]: Message: ${message}, Location: ${locations}, Path: ${path}`
+      )
+    );
+  }
+  if (networkError) {
+    console.log(`[Network error]: ${networkError}`);
+  }
+});
+
 const client = new ApolloClient({
-  uri: 'http://localhost:4000/graphql', // Replace with your GraphQL endpoint
-  cache: new InMemoryCache()
-})
+  link: from([errorLink, new HttpLink({ uri: '/graphql' })]),
+  uri: '/graphql',
+  cache: new InMemoryCache(),
+});
 
 const router = createBrowserRouter([
   {

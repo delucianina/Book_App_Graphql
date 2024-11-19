@@ -1,6 +1,6 @@
-import User from '../../User.js';
-import { getUserId } from '../../../services/auth.js';
-import { getErrorMessage } from '../../../helpers/index.js';
+import User from '../../models/User.js';
+import { getUserId } from '../../services/auth.js';
+import { getErrorMessage } from '../../helpers/index.js';
 
 const user_resolvers = {
   Query: {

@@ -29,6 +29,7 @@ export function StoreProvider(props: StoreProviderProps) {
 
   useEffect(() => {
     if (data) {
+      console.log(data);
       setState({
         ...state,
         loading: false,

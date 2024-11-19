@@ -1,14 +1,15 @@
 import type { Request, Response } from 'express';
 import { Types } from 'mongoose';
-import User from '../../../models/User.js';
-import { signToken, getUserId } from '../../../services/auth.js';
-import { getErrorMessage } from '../../../helpers/index.js';
+import User from '../../models/User.js';
+import { signToken, getUserId } from '../../services/auth.js';
+import { getErrorMessage } from '../../helpers/index.js';
 
 const auth_resolvers = {
   Query: {
     getUser: async (_: any, __: any, { req }: { req: Request }) => {
       const user_id = getUserId(req);
 
+      console.log('test');
       if (!user_id) {
         return {
           user: null
