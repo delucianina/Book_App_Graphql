@@ -4,7 +4,7 @@ import {
   saveBook,
   deleteBook
 } from '../../controllers/user_controller.js';
-import { blockGuest } from '../../services/auth.js';
+import { authenticate } from '../../services/auth.js';
 
 const router = express.Router();
 
@@ -15,9 +15,9 @@ const router = express.Router();
 // Retreives all books for the logged in user(It will return an empty array if there is no client cookie)
 router.get('/books', getUserBooks);
 // Save a book for the logged in user
-router.put('/books', blockGuest, saveBook);
+router.put('/books', authenticate, saveBook);
 // Delete a book for the logged in user
-router.delete('/book/:bookId', blockGuest, deleteBook);
+router.delete('/book/:bookId', authenticate, deleteBook);
 
 
 export default router;
