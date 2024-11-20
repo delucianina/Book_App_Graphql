@@ -1,76 +1,68 @@
 import type { Request, Response } from 'express';
+// import jwt from 'jsonwebtoken';
 import { Types } from 'mongoose';
 import User from '../../models/User.js';
 import { signToken, getUserId } from '../../services/auth.js';
 import { getErrorMessage } from '../../helpers/index.js';
-
+import { GraphQLError } from 'graphql';
+// const { sign } = jwt;
 const auth_resolvers = {
   Query: {
-    getUser: async (_: any, __: any, { req }: { req: Request }) => {
+    getUser: async (_: any, __: any, { req }: { req: Request }): Promise<{ user: any | null }> => {
       const user_id = getUserId(req);
-
-      console.log('test');
       if (!user_id) {
         return {
           user: null
         };
       }
-
       const user = await User.findById(user_id).select('_id username savedBooks');
-
       if (!user) {
         return {
           user: null
         };
       }
-
       return {
         user: user
       };
     }
   },
   Mutation: {
-    registerUser: async (_: any, { input }: { input: any }, { res }: { res: Response }) => {
+    async registerUser(_: any, args: { username: string; email: string; password: string; }, context: any) {
       try {
-        const user = await User.create(input);
+        const user = await User.create(args);
         const token = signToken(user._id as Types.ObjectId);
-
-        res.cookie('book_app_token', token, {
-          httpOnly: true,
-          secure: process.env.PORT ? true : false,
-          sameSite: true
-        });
-
-        return { user };
+        if (context.res) {
+          context.res.cookie('book_app_token', token, {
+            httpOnly: true,
+            secure: process.env.PORT ? true : false,
+            sameSite: true
+          });
+        } else {
+          throw new GraphQLError('Response object is not available in context');
+        }
+        return {
+          user: user
+        };
       } catch (error: any) {
         const errorMessage = getErrorMessage(error);
-
-        return {
-          message: errorMessage
-        };
+        throw new GraphQLError(errorMessage);
       }
     },
     loginUser: async (_: any, { input }: { input: any }, { res }: { res: Response }) => {
       const user = await User.findOne({ email: input.email });
-
       if (!user) {
         return { message: "No user found with that email address" };
       }
-
       const valid_pass = await user.validatePassword(input.password);
-
       if (!valid_pass) {
         return { message: 'Wrong password!' };
       }
-
       const token = signToken(user._id as Types.ObjectId);
-
       res.cookie('book_app_token', token, {
         httpOnly: true,
         secure: process.env.PORT ? true : false,
         sameSite: true
       });
-
       return { user };
     },
     logoutUser: async (_: any, __: any, { res }: { res: Response }) => {
@@ -81,5 +73,7 @@ const auth_resolvers = {
     }
   }
 };
-
 export default auth_resolvers;
+
+
+

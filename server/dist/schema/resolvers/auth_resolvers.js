@@ -1,11 +1,12 @@
 import User from '../../models/User.js';
 import { signToken, getUserId } from '../../services/auth.js';
 import { getErrorMessage } from '../../helpers/index.js';
+import { GraphQLError } from 'graphql';
+// const { sign } = jwt;
 const auth_resolvers = {
     Query: {
         getUser: async (_, __, { req }) => {
             const user_id = getUserId(req);
-            console.log('test');
             if (!user_id) {
                 return {
                     user: null
@@ -23,22 +24,27 @@ const auth_resolvers = {
         }
     },
     Mutation: {
-        registerUser: async (_, { input }, { res }) => {
+        async registerUser(_, args, context) {
             try {
-                const user = await User.create(input);
+                const user = await User.create(args);
                 const token = signToken(user._id);
-                res.cookie('book_app_token', token, {
-                    httpOnly: true,
-                    secure: process.env.PORT ? true : false,
-                    sameSite: true
-                });
-                return { user };
+                if (context.res) {
+                    context.res.cookie('book_app_token', token, {
+                        httpOnly: true,
+                        secure: process.env.PORT ? true : false,
+                        sameSite: true
+                    });
+                }
+                else {
+                    throw new GraphQLError('Response object is not available in context');
+                }
+                return {
+                    user: user
+                };
             }
             catch (error) {
                 const errorMessage = getErrorMessage(error);
-                return {
-                    message: errorMessage
-                };
+                throw new GraphQLError(errorMessage);
             }
         },
         loginUser: async (_, { input }, { res }) => {
