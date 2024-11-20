@@ -1,12 +1,12 @@
 import User from '../../models/User.js';
-import { signToken, getUserId } from '../../services/auth.js';
+import { signToken } from '../../services/auth.js';
 import { getErrorMessage } from '../../helpers/index.js';
 import { GraphQLError } from 'graphql';
 // const { sign } = jwt;
 const auth_resolvers = {
     Query: {
         getUser: async (_, __, { req }) => {
-            const user_id = getUserId(req);
+            const user_id = req.user_id;
             if (!user_id) {
                 return {
                     user: null
@@ -44,17 +44,18 @@ const auth_resolvers = {
             }
             catch (error) {
                 const errorMessage = getErrorMessage(error);
+                console.log(error);
                 throw new GraphQLError(errorMessage);
             }
         },
-        loginUser: async (_, { input }, { res }) => {
+        loginUser: async (_, input, { res }) => {
             const user = await User.findOne({ email: input.email });
             if (!user) {
-                return { message: "No user found with that email address" };
+                throw new GraphQLError("No user found with that email address");
             }
             const valid_pass = await user.validatePassword(input.password);
             if (!valid_pass) {
-                return { message: 'Wrong password!' };
+                throw new GraphQLError('Wrong password!');
             }
             const token = signToken(user._id);
             res.cookie('book_app_token', token, {

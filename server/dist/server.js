@@ -9,6 +9,7 @@ import { expressMiddleware } from '@apollo/server/express4';
 import typeDefs from './schema/typeDefs.js';
 import user_resolvers from './schema/resolvers/user_resolvers.js';
 import auth_resolvers from './schema/resolvers/auth_resolvers.js';
+import { authenticate } from './services/auth.js';
 const resolvers = {
     ...user_resolvers,
     ...auth_resolvers,
@@ -19,7 +20,7 @@ const server = new ApolloServer({
     typeDefs,
     resolvers,
 });
-app.use(express.urlencoded({ extended: true }));
+// app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 // Give routes access to req.cookies
 app.use(cookieParser());
@@ -36,7 +37,7 @@ db.once('open', async () => {
     app.use('/graphql', 
     // load this after server start
     expressMiddleware(server, {
-        context: async ({ req }) => ({ req, token: req.headers.token }),
+        context: authenticate,
     }));
     app.listen(PORT, () => console.log(`🌍 Now listening on localhost:${PORT}`));
 });
